@@ -14,9 +14,11 @@ import (
 
 var spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 
-func makeRequest() tea.Msg {
+const initialUrl = "http://date.jsontest.com/"
+
+func makeRequest(url string) tea.Msg {
 	c := &http.Client{Timeout: 10 * time.Second}
-	res, err := c.Get("http://date.jsontest.com/")
+	res, err := c.Get(url)
 	if err != nil {
 		return OnApiError{err}
 	}
@@ -33,6 +35,10 @@ func makeRequest() tea.Msg {
 
 type OnApiSuccess string
 type OnApiError struct{ err error }
+
+func (m model) makeApiRequest() tea.Msg {
+	return makeRequest(m.urlInput.Value())
+}
 
 type Style struct {
 	BorderColor lipgloss.Color
@@ -58,6 +64,7 @@ type model struct {
 func NewModel() model {
 	input := textinput.New()
 	input.Placeholder = "Enter a URL"
+	input.SetValue(initialUrl)
 	input.Focus()
 
 	s := spinner.New()
@@ -74,6 +81,8 @@ func (m model) Init() tea.Cmd {
 	return nil
 }
 
+type customCmd func() tea.Msg
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -86,7 +95,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "enter":
-			return m, makeRequest
+			return m, m.makeApiRequest
 		}
 
 	case OnApiSuccess:
@@ -95,7 +104,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case OnApiError:
 		m.responce = "err: " + string(msg.err.Error())
 	}
-	m.urlInput, cmd = m.urlInput.Update(msg)
+	m.urlInput, _ = m.urlInput.Update(msg)
 	return m, cmd
 }
 
