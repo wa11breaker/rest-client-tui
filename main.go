@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/alecthomas/chroma/quick"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -33,7 +36,7 @@ func makeRequest(url string) tea.Msg {
 	return OnApiSuccess(responseString)
 }
 
-type OnApiSuccess string
+type OnApiSuccess []byte
 type OnApiError struct{ err error }
 
 func (m model) makeApiRequest() tea.Msg {
@@ -58,7 +61,6 @@ type model struct {
 	inputStyle *Style
 	width      int
 	height     int
-	spinner    spinner.Model
 }
 
 func NewModel() model {
@@ -72,7 +74,6 @@ func NewModel() model {
 	model := model{
 		urlInput:   input,
 		inputStyle: DefaultStyle(),
-		spinner:    s,
 	}
 	return model
 }
@@ -99,7 +100,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case OnApiSuccess:
-		m.responce = "res: " + string(msg)
+		var jsonData interface{}
+		err := json.Unmarshal(msg, &jsonData)
+		if err != nil {
+			log.Println("Error parsing JSON:", err)
+			m.responce = "err: " + err.Error()
+			return m, nil
+		}
+
+		formattedJSON, err := json.MarshalIndent(jsonData, "", "  ")
+		if err != nil {
+			log.Println("Error formatting JSON:", err)
+		}
+
+		var buf bytes.Buffer
+
+		// Syntax highlighting using chroma
+		err = quick.Highlight(&buf, string(formattedJSON), "json", "terminal", "monokai")
+		if err != nil {
+			log.Println("Error highlighting JSON:", err)
+		}
+
+		m.responce = buf.String()
 
 	case OnApiError:
 		m.responce = "err: " + string(msg.err.Error())
@@ -112,6 +134,14 @@ func (m model) View() string {
 	if m.width == 0 {
 		return "Loading.."
 	}
+
+	// string := []string{
+	// 	m.inputStyle.InputField.Render(m.urlInput.View()),
+	// }
+
+	// if len(m.responce) > 0 {
+	// 	string = append(string, m.responce)
+	// }
 
 	return lipgloss.Place(
 		m.width,
