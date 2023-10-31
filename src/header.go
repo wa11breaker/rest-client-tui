@@ -3,8 +3,10 @@ package app
 import "github.com/charmbracelet/bubbles/textinput"
 
 type header struct {
-	inputStyle *Style
-	urlInput   textinput.Model
+	inputStyle      *Style
+	methoInputStyle *Style
+	urlInput        textinput.Model
+	methodInput     textinput.Model
 }
 
 func newHeader() header {
@@ -13,9 +15,15 @@ func newHeader() header {
 	input.SetValue(initialUrl)
 	input.Focus()
 
+	methodInput := textinput.New()
+	methodInput.Placeholder = "GET"
+	methodInput.SetValue("GET")
+
 	header := header{
-		urlInput:   input,
-		inputStyle: TextFieldStyle(),
+		methodInput:     methodInput,
+		urlInput:        input,
+		inputStyle:      UrlInputStyle(),
+		methoInputStyle: MethodInputStyle(),
 	}
 	return header
 }

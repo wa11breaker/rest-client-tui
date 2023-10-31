@@ -9,7 +9,7 @@ type Style struct {
 
 var spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 
-func TextFieldStyle() *Style {
+func UrlInputStyle() *Style {
 	s := new(Style)
 	s.BorderColor = lipgloss.Color("0")
 	s.InputField = lipgloss.NewStyle().
@@ -17,6 +17,18 @@ func TextFieldStyle() *Style {
 		BorderStyle(lipgloss.NormalBorder()).
 		Padding(0).
 		Width(50)
+
+	return s
+}
+
+func MethodInputStyle() *Style {
+	s := new(Style)
+	s.BorderColor = lipgloss.Color("0")
+	s.InputField = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("2")).
+		BorderStyle(lipgloss.NormalBorder()).
+		Padding(0).
+		Width(10)
 
 	return s
 }

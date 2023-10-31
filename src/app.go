@@ -1,11 +1,6 @@
 package app
 
 import (
-	"bytes"
-	"encoding/json"
-	"log"
-
-	"github.com/alecthomas/chroma/quick"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -21,7 +16,7 @@ func (m model) makeApiRequest() tea.Msg {
 }
 
 type model struct {
-	response string
+	response response
 	header   header
 	width    int
 	height   int
@@ -54,35 +49,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "enter":
+			m.response.status = loading
 			return m, m.makeApiRequest
 		}
 
 	case OnApiSuccess:
-		var jsonData interface{}
-		err := json.Unmarshal(msg, &jsonData)
-		if err != nil {
-			log.Println("Error parsing JSON:", err)
-			m.response = "err: " + err.Error()
-			return m, nil
-		}
-
-		formattedJSON, err := json.MarshalIndent(jsonData, "", "  ")
-		if err != nil {
-			log.Println("Error formatting JSON:", err)
-		}
-
-		var buf bytes.Buffer
-
-		// Syntax highlighting using chroma
-		err = quick.Highlight(&buf, string(formattedJSON), "json", "terminal", "monokai")
-		if err != nil {
-			log.Println("Error highlighting JSON:", err)
-		}
-
-		m.response = buf.String()
+		m.response.status = success
+		m.response.responseBytes = msg
 
 	case OnApiError:
-		m.response = "err: " + string(msg.err.Error())
+		m.response.status = failure
+		m.response.error = msg.err
+
 	}
 	m.header.urlInput, _ = m.header.urlInput.Update(msg)
 	return m, cmd
@@ -100,9 +78,13 @@ func (m model) View() string {
 		lipgloss.Center,
 
 		lipgloss.JoinVertical(
-			lipgloss.Center,
-			m.header.inputStyle.InputField.Render(m.header.urlInput.View()),
-			m.response,
+			lipgloss.Left,
+			lipgloss.JoinHorizontal(
+				lipgloss.Left,
+				m.header.methoInputStyle.InputField.Render(m.header.methodInput.View()),
+				m.header.inputStyle.InputField.Render(m.header.urlInput.View()),
+			),
+			m.response.render(),
 		),
 	)
 }
