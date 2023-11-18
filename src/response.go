@@ -7,6 +7,7 @@ import (
 
 	"github.com/alecthomas/chroma/quick"
 	"github.com/charmbracelet/bubbles/viewport"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
@@ -22,6 +23,13 @@ type response struct {
 	error         error
 	status        int
 	model         viewport.Model
+	width         int
+	height        int
+}
+
+func (m *response) setViewPortSize(w, h int) {
+	m.width = w
+	m.height = h
 }
 
 func (r *response) responseView() string {
@@ -63,9 +71,18 @@ func (r *response) responseView() string {
 	return r.response
 }
 
-func (r *response) render() string {
-	r.model.SetContent(r.responseView())
-	r.model.Width = 50
-	r.model.Height = 10
-	return r.model.View()
+func (r *response) Render() string {
+	res := r.responseView()
+
+	focusedModelStyle := lipgloss.NewStyle().
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("0")).
+		Width(20).Height(20)
+
+	// r.model.SetContent(focusedModelStyle.Render(res))
+	// r.model.Height = 14
+	// r.model.Width = r.width
+
+	// return r.model.View()
+	return focusedModelStyle.Render(res)
 }

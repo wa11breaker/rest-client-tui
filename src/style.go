@@ -2,6 +2,10 @@ package app
 
 import "github.com/charmbracelet/lipgloss"
 
+var (
+	httpMethodWidth = 10
+)
+
 type Style struct {
 	BorderColor lipgloss.Color
 	InputField  lipgloss.Style
@@ -15,8 +19,7 @@ func UrlInputStyle() *Style {
 	s.InputField = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("2")).
 		BorderStyle(lipgloss.NormalBorder()).
-		Padding(0).
-		Width(50)
+		Padding(0).UnsetMaxWidth()
 
 	return s
 }
@@ -28,7 +31,7 @@ func MethodInputStyle() *Style {
 		Foreground(lipgloss.Color("2")).
 		BorderStyle(lipgloss.NormalBorder()).
 		Padding(0).
-		Width(10)
+		Width(httpMethodWidth)
 
 	return s
 }
